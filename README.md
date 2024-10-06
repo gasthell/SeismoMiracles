@@ -4,11 +4,17 @@ You can run this project via app.py (requires tensorflow, obspy, customtkinter, 
 But we also have a public exe file! (When unpacking, make sure that _internal and app.exe are in the same folder!):
 
 
-You can also view examples of our program output in the example_plots folder
+You can also view examples of our program output in the example_plots folder.
+
 
 Important information on graphs!
-Red vertical line - the beginning of the earthquake
-Green solid line - the line of background activity
-Green dashed line - earthquake registration zone
-Pink vertical line - activity according to the spectrogram
-Pink diagonal line - the interval from the peak of activity to its fall serves to search for the essence of the earthquake
+
+Red vertical line - the beginning of the earthquake.
+
+Green solid line - the line of background activity.
+
+Green dashed line - earthquake registration zone.
+
+Pink vertical line - activity according to the spectrogram.
+
+Pink diagonal line - the interval from the peak of activity to its fall serves to search for the essence of the earthquake.
