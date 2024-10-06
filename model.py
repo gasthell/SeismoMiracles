@@ -4,11 +4,22 @@ from sklearn.preprocessing import StandardScaler
 import numpy as np
 from obspy import read
 import matplotlib.pyplot as plt
+import sys
+import os
 
 
 class MoonDM():
     def __init__(self):
-        self.model = tf.keras.models.load_model('seismic_moon_lstm_model')
+        if getattr(sys, 'frozen', False):
+            # If the application is compiled
+            base_path = sys._MEIPASS
+        else:
+            # If running in the source script
+            base_path = os.path.dirname(os.path.abspath(__file__))
+
+        # Construct the full path to the model
+        model_path = os.path.join(base_path, 'seismic_moon_lstm_model')
+        self.model = tf.keras.models.load_model(model_path)
         self.scaler = StandardScaler()
 
     def fit_scaler(self, seismic_data):
@@ -29,7 +40,16 @@ class MoonDM():
 
 class MarsDM():
     def __init__(self):
-        self.model = tf.keras.models.load_model('seismic_mars_lstm_model')
+        if getattr(sys, 'frozen', False):
+            # If the application is compiled
+            base_path = sys._MEIPASS
+        else:
+            # If running in the source script
+            base_path = os.path.dirname(os.path.abspath(__file__))
+
+        # Construct the full path to the model
+        model_path = os.path.join(base_path, 'seismic_mars_lstm_model')
+        self.model = tf.keras.models.load_model(model_path)
         self.scaler = StandardScaler()
 
     def fit_scaler(self, seismic_data):
