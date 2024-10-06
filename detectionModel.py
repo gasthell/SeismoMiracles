@@ -4,8 +4,8 @@ import os
 from datetime import datetime
 
 # Paths to the folders containing seismic data and the timestamp file
-seismic_folder = ".\\space_apps_2024_seismic_detection\\data\\lunar\\training\\data\\S12_GradeA"
-timestamp_file = ".\\space_apps_2024_seismic_detection\\data\\lunar\\training\\catalogs\\apollo12_catalog_GradeA_final.csv"
+seismic_folder = ".\\space_apps_2024_seismic_detection\\data\\mars\\training\\data"
+timestamp_file = ".\\space_apps_2024_seismic_detection\\data\\mars\\training\\catalogs\\Mars_InSight_training_catalog_final.csv"
 
 # Load the timestamp file
 timestamps_df = pd.read_csv(timestamp_file)
@@ -87,8 +87,12 @@ model.add(Dense(1, activation='sigmoid'))
 model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
 # Train the model
-history = model.fit(X_train_scaled, y_train, epochs=10, batch_size=32, validation_split=0.2)
+history = model.fit(X_train_scaled, y_train, epochs=2, batch_size=32, validation_split=0.2)
+
+# Save the entire model in the TensorFlow SavedModel format
+model.save('seismic_mars_lstm_model')
 
 # Evaluate the model
 test_loss, test_acc = model.evaluate(X_test_scaled, y_test)
 print(f"Test Accuracy: {test_acc:.2f}")
+model = tf.keras.models.load_model('seismic_lstm_model')

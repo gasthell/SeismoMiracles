@@ -16,16 +16,13 @@ from matplotlib import cm
 import model
 
 class Mars:
-    def __init__(self, grade):
-        self.grade = grade
-        self.directory = f'./space_apps_2024_seismic_detection/data/mars/test/data/{self.grade}/'
+    def __init__(self, filename):
+        self.filename = filename
         self.mymodel, self.regMymodel, self.negMymodel, self.regNegMymodel = [[],[],[],[]]
-        self.lstmMars = model.MarsDM
+        self.lstmMars = model.MarsDM()
     
     def main(self):
-        filenames = next(walk(f'./space_apps_2024_seismic_detection/data/mars/test/data/{self.grade}/'), (None, None, []))[2]
-        for i in range(int(len(filenames)/2)):
-            self.predict(filenames[i*2])
+        self.predict(self.filename)
 
     def isExp(self, tr_data):
         tr_av = 0
@@ -79,8 +76,7 @@ class Mars:
         return detectEntryX
             
     def TraceVerification(self, filename):
-        mseed_file = f'{self.directory}{filename[0:len(filename)-4]}.mseed'
-        st = read(mseed_file)
+        st = read(filename)
 
         # Non filtered data
         st_nonfilt = st.copy()
@@ -102,64 +98,6 @@ class Mars:
         self.plotMaximizedBackgroundNRegLine(ax, tr_times_filt)
 
         SeismoEntry = []
-
-        EntryX = self.spectogramShakeDetection(f, t, sxx)
-
-        for elem in EntryX:
-            ax.axvline(x = elem, color='pink', linestyle = 'dashed', label='Detection', linewidth=2)
-            startX = 0
-            for i in range(len(tr_times_filt)):
-                if tr_times_filt[i] >= elem:
-                    startX = i
-                    break
-            timedelta = 1000
-            for j in range(startX, len(tr_times_filt)):
-                if tr_times_filt[startX] + 200 <= tr_times_filt[j]:
-                    timedelta = j
-            
-            if max(tr_data_filt_abs[startX:timedelta]) > self.regMymodel[startX]:
-                i = 0
-                findedpick = False
-                starttimeofquake = 0
-
-                while startX <= len(tr_data_filt_abs)-1:
-                    if tr_data_filt_abs[startX] > self.regMymodel[startX] or findedpick:
-                        findedpick = True
-                        if starttimeofquake == 0:
-                            starttimeofquake = startX
-                        timedelta = 0
-                        
-                        for j in range(startX, len(tr_times_filt)):
-                            if tr_times_filt[startX] + 200 <= tr_times_filt[j]:
-                                timedelta = j
-                                break
-                        if timedelta == 0:
-                            timedelta = len(tr_times_filt)
-
-                        BottomY = max(tr_data_filt_abs[startX:timedelta])
-                        if BottomY < self.mymodel[startX]:
-                            BottomX = tr_times_filt[startX]
-
-                            TopY = max(tr_data_filt_abs[starttimeofquake:timedelta])
-                            TopX = tr_times_filt[starttimeofquake]
-                            plt.scatter(TopX, TopY, color = 'pink', linestyle = 'dashed', marker = '.')
-                            plt.scatter(BottomX, BottomY, color = 'pink', linestyle = 'dashed', marker = '.')
-                            ax.plot([TopX, BottomX], [TopY, BottomY], color = 'pink', linestyle = 'solid')
-                            
-                            a = (BottomX-TopX)
-                            b = (TopY-BottomY)
-                            texp = self.isExp(tr_data_filt)-math.sqrt(a**2 + b**2)
-                            if(a/100 > 8 and a/100 < 100 and texp <= -800 and texp >= -4000):
-                                SeismoEntry.append(elem)
-                                ax.axvline(x = elem, color='red',label='Detection')
-                            
-                            findedpick = False
-                            starttimeofquake = 0
-                            break
-                        startX = timedelta
-                    startX+=1
-        print(SeismoEntry)
-        '''
         i = 0
         findedpick = False
         starttimeofquake = 0
@@ -172,7 +110,7 @@ class Mars:
                 timedelta = 0
                 
                 for j in range(i, len(tr_times_filt)):
-                    if tr_times_filt[i] + 100 <= tr_times_filt[j]:
+                    if tr_times_filt[i] + 10 <= tr_times_filt[j]:
                         timedelta = j
                         break
                 if timedelta == 0:
@@ -190,7 +128,7 @@ class Mars:
                     
                     a = (BottomX-TopX)/100
                     b = (TopY-BottomY)*10000000000
-                    if(a > 8):
+                    if(a > 1):
                         SeismoEntry.append(TopX)
                         ax.axvline(x = TopX, color='red',label='Detection')
                     
@@ -198,9 +136,9 @@ class Mars:
                     starttimeofquake = 0
                 i = timedelta
             i+=1
-        '''
-        entryByAi = self.lstmMars.analyze(tr_data_filt)
-        ax.axvline(x = tr_times_filt(entryByAi), color='purple',label='Detection')
+            
+        self.lstmMars.fit_scaler(tr_data_filt)  # Fit the scaler with filtered seismic data
+        predictions = self.lstmMars.analyze(tr_data_filt)
 
         # Initialize figure
         ax2 = plt.subplot(2, 2, 2)
@@ -209,8 +147,6 @@ class Mars:
         # Initialize figure
         ax3 = plt.subplot(2, 2, 3)
         self.plotSpectogram(ax3, tr_times_filt, f, t, sxx)
-        for elem in EntryX:
-            ax3.axvline(x = elem, color='pink', linestyle = 'dashed', label='Detection', linewidth=2)
         for elem in SeismoEntry:
             ax3.axvline(x = elem, color='red',label='Detection')
 
@@ -218,7 +154,7 @@ class Mars:
         ax4 = plt.subplot(2, 2, 4)
         self.plotSpectogram(ax4, tr_times_filt, fn, tn, sxxn)
 
-        plt.savefig(f'./plots/mars/{self.grade}/{filename}.png')
+        plt.show()
         plt.close()
 
     def maximizedBackgroundNRegLine(self, tr_times_filt, tr_data_filt_replaced):
@@ -270,16 +206,13 @@ class Mars:
         cbar.set_label('Power ((m/s)^2/sqrt(Hz))', fontweight='bold')
 
 class Moon:
-    def __init__(self, grade):
-        self.grade = grade
-        self.directory = f'./space_apps_2024_seismic_detection/data/lunar/test/data/{self.grade}/'
+    def __init__(self, filename):
+        self.filename = filename
         self.mymodel, self.regMymodel, self.negMymodel, self.regNegMymodel = [[],[],[],[]]
-        self.lstmMoon = model.MoonDM
+        self.lstmMoon = model.MoonDM()
     
     def main(self):
-        filenames = next(walk(f'./space_apps_2024_seismic_detection/data/lunar/test/data/{self.grade}/'), (None, None, []))[2]
-        for i in range(int(len(filenames)/2)):
-            self.predict(filenames[i*2])
+        self.predict(self.filename)
 
     def isExp(self, tr_data):
         tr_av = 0
@@ -333,8 +266,7 @@ class Moon:
         return detectEntryX
             
     def TraceVerification(self, filename):
-        mseed_file = f'{self.directory}{filename[0:len(filename)-4]}.mseed'
-        st = read(mseed_file)
+        st = read(filename)
 
         # Non filtered data
         st_nonfilt = st.copy()
@@ -453,8 +385,8 @@ class Moon:
                 i = timedelta
             i+=1
         '''
-        entryByAi = self.lstmMoon.analyze(tr_data_filt)
-        ax.axvline(x = tr_times_filt(entryByAi), color='purple',label='Detection')
+        self.lstmMoon.fit_scaler(tr_data_filt)  # Fit the scaler with filtered seismic data
+        predictions = self.lstmMoon.analyze(tr_data_filt)
 
         # Initialize figure
         ax2 = plt.subplot(2, 2, 2)
@@ -472,7 +404,7 @@ class Moon:
         ax4 = plt.subplot(2, 2, 4)
         self.plotSpectogram(ax4, tr_times_filt, fn, tn, sxxn)
 
-        plt.savefig(f'./plots/moon/{self.grade}/{filename}.png')
+        plt.show()
         plt.close()
 
     def maximizedBackgroundNRegLine(self, tr_times_filt, tr_data_filt_replaced):
@@ -522,7 +454,3 @@ class Moon:
         ax.set_ylabel('Frequency (Hz)', fontweight='bold')
         cbar = plt.colorbar(vals, orientation='horizontal')
         cbar.set_label('Power ((m/s)^2/sqrt(Hz))', fontweight='bold')
-
-
-moon = Moon("S16_GradeA")
-moon.main()
