@@ -1,9 +1,6 @@
 Welcome to this repository! We are the SeismoMiracles team, and we have been working on the Seismic Detection Across the Solar System challenge.
 You can run this project via app.py (requires tensorflow, obspy, customtkinter, tkinter, scipy, sklearn)
 
-But we also have a public exe file! (When unpacking, make sure that _internal and app.exe are in the same folder!):
-https://drive.google.com/drive/folders/1X0xMvAuhNp9thsn3xzbFxE_yYvWrl79y?usp=sharing
-
 
 You can also view examples of our program output in the example_plots folder.
 
